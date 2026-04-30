@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Fitness Maker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lime: #C8FF00;
+    --dark: #0A0A0A;
+    --card: #141414;
+    --border: #222;
+    --muted: #555;
+    --white: #F5F5F5;
+    --red: #FF3B30;
+    --orange: #FF9500;
+    --green: #34C759;
+    --blue: #0A84FF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--dark);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(12px); z-index: 100;
+  }
+  .logo { font-family: 'Bebas Neue'; font-size: 26px; letter-spacing: 2px; color: var(--lime); }
+  .nav-user { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--lime); display: flex; align-items: center; justify-content: center; color: var(--dark); font-weight: 700; font-size: 14px; }
+  .btn-logout { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; font-family: 'DM Sans'; }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* LOGIN PAGE */
+  #loginPage {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse 60% 60% at 50% 0%, rgba(200,255,0,0.08) 0%, transparent 70%);
+    padding: 40px 20px;
+  }
+  .login-box {
+    width: 100%; max-width: 480px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .login-box::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--lime), transparent);
+  }
+  .login-title { font-family: 'Bebas Neue'; font-size: 42px; letter-spacing: 2px; line-height: 1; }
+  .login-title span { color: var(--lime); }
+  .login-sub { color: var(--muted); margin-top: 8px; font-size: 14px; }
+  .form-group { margin-top: 24px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; }
+  .field input, .field select {
+    background: #1C1C1C;
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-family: 'DM Sans';
+    transition: border-color .2s;
+    outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--lime); }
+  .field select option { background: #1C1C1C; }
+
+  /* BMI Preview */
+  .bmi-preview {
+    margin-top: 20px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: none;
+    align-items: center; gap: 16px;
+  }
+  .bmi-preview.show { display: flex; }
+  .bmi-number { font-family: 'Space Mono'; font-size: 28px; font-weight: 700; }
+  .bmi-info .bmi-status { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .bmi-info .bmi-range { font-size: 12px; color: var(--muted); }
+
+  .btn-primary {
+    width: 100%; margin-top: 24px;
+    background: var(--lime);
+    color: var(--dark);
+    border: none; border-radius: 12px;
+    padding: 16px;
+    font-family: 'Bebas Neue'; font-size: 18px; letter-spacing: 2px;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-primary:hover { background: #d4ff1a; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(200,255,0,0.25); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* GOAL PAGE */
+  #goalPage { padding: 48px 32px; max-width: 900px; margin: 0 auto; }
+  .page-title { font-family: 'Bebas Neue'; font-size: 48px; letter-spacing: 2px; }
+  .page-title span { color: var(--lime); }
+  .page-sub { color: var(--muted); margin-top: 6px; font-size: 15px; }
+
+  /* Profile summary bar */
+  .profile-bar {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-top: 24px; margin-bottom: 40px;
+  }
+  .pstat {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 18px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .pstat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+  .pstat-value { font-family: 'Space Mono'; font-size: 16px; font-weight: 700; }
+
+  .goal-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .goal-card {
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 20px; padding: 32px 24px;
+    cursor: pointer; transition: all .25s; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .goal-card::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity .25s; }
+  .goal-card:hover { transform: translateY(-4px); }
+  .goal-card.selected { border-color: var(--lime); }
+  .goal-card.selected::before { opacity: 1; background: rgba(200,255,0,0.04); }
+  .goal-icon { font-size: 48px; margin-bottom: 16px; }
+  .goal-title { font-family: 'Bebas Neue'; font-size: 22px; letter-spacing: 1px; margin-bottom: 8px; }
+  .goal-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .goal-badge { position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; border-radius: 50%; background: var(--lime); display: none; align-items: center; justify-content: center; color: var(--dark); font-size: 12px; font-weight: 700; }
+  .goal-card.selected .goal-badge { display: flex; }
+
+  /* PLAN PAGE */
+  #planPage { padding: 40px 32px; max-width: 1100px; margin: 0 auto; }
+  .tabs { display: flex; gap: 4px; background: var(--card); border-radius: 12px; padding: 4px; width: fit-content; margin: 24px 0 32px; border: 1px solid var(--border); }
+  .tab-btn {
+    padding: 10px 22px; border-radius: 9px;
+    background: none; border: none;
+    color: var(--muted); font-family: 'DM Sans'; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all .2s;
+  }
+  .tab-btn.active { background: var(--lime); color: var(--dark); font-weight: 600; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Food plan */
+  .meal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .meal-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+  }
+  .meal-time { font-size: 11px; color: var(--lime); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 8px; }
+  .meal-name { font-family: 'Bebas Neue'; font-size: 20px; letter-spacing: 1px; margin-bottom: 12px; }
+  .meal-items { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .meal-items li { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .meal-items li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--lime); flex-shrink: 0; }
+  .macro-bar { display: flex; gap: 10px; margin-top: 14px; }
+  .macro { flex: 1; background: #1C1C1C; border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .macro-val { font-family: 'Space Mono'; font-size: 14px; font-weight: 700; }
+  .macro-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* Exercise plan */
+  .exercise-list { display: flex; flex-direction: column; gap: 12px; }
+  .ex-row {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 24px;
+    display: flex; align-items: center; gap: 20px;
+    cursor: pointer; transition: all .2s;
+  }
+  .ex-row:hover { border-color: var(--lime); }
+  .ex-num { font-family: 'Bebas Neue'; font-size: 32px; color: var(--border); width: 36px; flex-shrink: 0; }
+  .ex-info { flex: 1; }
+  .ex-name { font-family: 'Bebas Neue'; font-size: 20px; letter-spacing: 1px; }
+  .ex-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .ex-badges { display: flex; gap: 8px; }
+  .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: rgba(52,199,89,.15); color: var(--green); }
+  .badge-orange { background: rgba(255,149,0,.15); color: var(--orange); }
+  .badge-blue { background: rgba(10,132,255,.15); color: var(--blue); }
+  .btn-monitor {
+    background: var(--lime); color: var(--dark); border: none;
+    border-radius: 10px; padding: 10px 18px;
+    font-family: 'Bebas Neue'; font-size: 15px; letter-spacing: 1px;
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .btn-monitor:hover { background: #d4ff1a; }
+
+  /* Precautions */
+  .precaution-list { display: flex; flex-direction: column; gap: 12px; }
+  .precaution {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 22px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .precaution-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+  .precaution-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .precaution-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* CAMERA PAGE */
+  #cameraPage { padding: 32px; max-width: 1000px; margin: 0 auto; }
+  .camera-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+  .btn-back { background: var(--card); border: 1px solid var(--border); color: var(--white); padding: 10px 20px; border-radius: 10px; cursor: pointer; font-family: 'DM Sans'; font-size: 14px; transition: all .2s; }
+  .btn-back:hover { border-color: var(--lime); color: var(--lime); }
+  .camera-layout { display: grid; grid-template-columns: 1fr 300px; gap: 24px; }
+  .video-wrap { position: relative; border-radius: 20px; overflow: hidden; background: #000; aspect-ratio: 4/3; }
+  #videoEl { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+  #poseCanvas { position: absolute; inset: 0; width: 100%; height: 100%; transform: scaleX(-1); }
+  .pose-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px 20px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  }
+  .pose-feedback {
+    font-family: 'Bebas Neue'; font-size: 20px; letter-spacing: 1px;
+    padding: 6px 14px; border-radius: 8px; display: inline-block;
+    background: rgba(200,255,0,0.15); color: var(--lime);
+    border: 1px solid rgba(200,255,0,0.3);
+  }
+  .pose-feedback.wrong { background: rgba(255,59,48,.15); color: var(--red); border-color: rgba(255,59,48,.3); }
+
+  .camera-stats { display: flex; flex-direction: column; gap: 14px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+    text-align: center;
+  }
+  .stat-big { font-family: 'Bebas Neue'; font-size: 56px; line-height: 1; color: var(--lime); }
+  .stat-label-big { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  .angle-display { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .angle-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+  .angle-val { font-family: 'Space Mono'; font-size: 14px; }
+  .btn-start-ex {
+    width: 100%; padding: 14px;
+    background: var(--lime); color: var(--dark);
+    border: none; border-radius: 12px;
+    font-family: 'Bebas Neue'; font-size: 18px; letter-spacing: 2px;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-start-ex:hover { background: #d4ff1a; }
+  .btn-start-ex.stop { background: var(--red); color: #fff; }
+  #cameraStatus {
+    margin-top: 10px; font-size: 13px; color: var(--muted); text-align: center;
+    min-height: 20px;
+  }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--card); border: 1px solid var(--lime); color: var(--lime);
+    padding: 12px 24px; border-radius: 12px;
+    font-family: 'Bebas Neue'; font-size: 16px; letter-spacing: 1px;
+    z-index: 999; transition: transform .3s; pointer-events: none;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--dark); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .goal-cards { grid-template-columns: 1fr; }
+    .camera-layout { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .login-box { padding: 32px 24px; }
+    #goalPage, #planPage, #cameraPage { padding: 24px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="mainNav" style="display:none;">
+  <div class="logo">💪 AI Fitness Maker</div>
+  <div class="nav-user">
+    <div class="avatar" id="navAvatar">U</div>
+    <span id="navName" style="font-size:14px;"></span>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- PAGE 1: LOGIN -->
+<div id="loginPage" class="page active">
+  <div class="login-box">
+    <div class="login-title">AI <span>FITNESS</span><br>MAKER</div>
+    <p class="login-sub">Enter your details to get a personalized fitness plan.</p>
+    <div class="form-group">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="inName" placeholder="e.g. Arjun Sharma" oninput="calcBMI()">
+      </div>
+      <div class="form-row" style="margin-top:16px;">
+        <div class="field">
+          <label>Age</label>
+          <input type="number" id="inAge" placeholder="21" min="10" max="100" oninput="calcBMI()">
+        </div>
+        <div class="field">
+          <label>Gender</label>
+          <select id="inGender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:16px;">
+        <div class="field">
+          <label>Height (cm)</label>
+          <input type="number" id="inHeight" placeholder="170" min="100" max="250" oninput="calcBMI()">
+        </div>
+        <div class="field">
+          <label>Weight (kg)</label>
+          <input type="number" id="inWeight" placeholder="65" min="20" max="300" oninput="calcBMI()">
+        </div>
+      </div>
+    </div>
+
+    <div class="bmi-preview" id="bmiPreview">
+      <div class="bmi-number" id="bmiNum">—</div>
+      <div class="bmi-info">
+        <div class="bmi-status" id="bmiStatus">—</div>
+        <div class="bmi-range" id="bmiRange">—</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()" disabled>GET MY PLAN →</button>
+  </div>
+</div>
+
+<!-- PAGE 2: GOAL -->
+<div id="goalPage" class="page">
+  <div class="page-title">CHOOSE YOUR <span>GOAL</span></div>
+  <p class="page-sub" id="goalSub">Based on your profile, here's what we recommend.</p>
+
+  <div class="profile-bar" id="profileBar"></div>
+
+  <div class="goal-cards">
+    <div class="goal-card" onclick="selectGoal('lose')">
+      <div class="goal-badge">✓</div>
+      <div class="goal-icon">🔥</div>
+      <div class="goal-title">WEIGHT LOSS</div>
+      <div class="goal-desc">Burn fat, reduce calories, cardio-focused workouts with a calorie deficit meal plan.</div>
+    </div>
+    <div class="goal-card" onclick="selectGoal('gain')">
+      <div class="goal-badge">✓</div>
+      <div class="goal-icon">💪</div>
+      <div class="goal-title">BODY GAIN</div>
+      <div class="goal-desc">Build muscle mass with a protein-rich diet and progressive strength training.</div>
+    </div>
+    <div class="goal-card" onclick="selectGoal('maintain')">
+      <div class="goal-badge">✓</div>
+      <div class="goal-icon">⚖️</div>
+      <div class="goal-title">MAINTAIN & TONE</div>
+      <div class="goal-desc">Stay at your current weight while improving muscle tone, flexibility and stamina.</div>
+    </div>
+  </div>
+
+  <button class="btn-primary" id="goalBtn" onclick="goPlan()" disabled style="max-width:360px;margin-top:32px;">BUILD MY PLAN →</button>
+</div>
+
+<!-- PAGE 3: PLAN -->
+<div id="planPage" class="page">
+  <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+    <div>
+      <div class="page-title" id="planTitle">YOUR <span>PLAN</span></div>
+      <p class="page-sub" id="planSub">Personalized just for you.</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('food')">🥗 Food Plan</button>
+    <button class="tab-btn" onclick="switchTab('exercise')">🏋️ Exercise Plan</button>
+    <button class="tab-btn" onclick="switchTab('precautions')">⚠️ Precautions</button>
+  </div>
+
+  <div class="tab-content active" id="tab-food"></div>
+  <div class="tab-content" id="tab-exercise"></div>
+  <div class="tab-content" id="tab-precautions"></div>
+</div>
+
+<!-- PAGE 4: CAMERA -->
+<div id="cameraPage" class="page">
+  <div class="camera-header">
+    <div>
+      <div class="page-title" id="camTitle">EXERCISE <span>MONITOR</span></div>
+      <p class="page-sub" id="camSubTitle">AI Pose Detection • Rep Counter • Form Feedback</p>
+    </div>
+    <button class="btn-back" onclick="showPage('planPage')">← Back to Plan</button>
+  </div>
+
+  <div class="camera-layout">
+    <div class="video-wrap">
+      <video id="videoEl" autoplay playsinline muted></video>
+      <canvas id="poseCanvas"></canvas>
+      <div class="pose-overlay">
+        <div class="pose-feedback" id="poseFeedback">Start Camera to Begin</div>
+      </div>
+    </div>
+
+    <div class="camera-stats">
+      <div class="stat-card">
+        <div class="stat-big" id="repCount">0</div>
+        <div class="stat-label-big">REPS COMPLETED</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">JOINT ANGLES</div>
+        <div class="angle-display" id="angleDisplay">
+          <div class="angle-row"><span>Left Arm</span><span class="angle-val" id="angLA">—°</span></div>
+          <div class="angle-row"><span>Right Arm</span><span class="angle-val" id="angRA">—°</span></div>
+          <div class="angle-row"><span>Left Knee</span><span class="angle-val" id="angLK">—°</span></div>
+          <div class="angle-row"><span>Right Knee</span><span class="angle-val" id="angRK">—°</span></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div id="cameraStatus">Camera not started</div>
+        <button class="btn-start-ex" id="cameraBtn" onclick="toggleCamera()">▶ START CAMERA</button>
+        <button class="btn-start-ex" id="resetBtn" onclick="resetReps()" style="margin-top:8px;background:var(--card);border:1px solid var(--border);color:var(--white);">RESET REPS</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+<script>
+// ═══════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════
+let user = null;
+let selectedGoal = null;
+let currentExercise = null;
+let cameraStream = null;
+let poseDetector = null;
+let mpCamera = null;
+let recommendationData = null;
+let activeSessionId = null;
+let wrongPoseEvents = 0;
+let correctReps = 0;
+let sessionStartedAt = 0;
+let lastPoseSyncAt = 0;
+let poseRequestInFlight = false;
+
+// ─────────────────────────────────────
+// REP COUNTING STATE
+// repPhase tracks where we are in the
+// movement:  'start' → 'midpoint' → back
+// A rep is only counted when the joint
+// completes a FULL cycle:
+//   start-position → midpoint → start-position
+// A hysteresis band prevents jitter at
+// threshold boundaries from double-firing.
+// ─────────────────────────────────────
+let repCount = 0;
+let repPhase = 'start';   // 'start' | 'midpoint'
+let lastRepTimestamp = 0;
+
+const API_BASE = 'http://127.0.0.1:8000';
+
+// ─────────────────────────────────────
+// HYSTERESIS THRESHOLDS
+// Each exercise defines:
+//   startMin/startMax  – angle range that
+//       confirms the "start" (rest) position
+//   midMin/midMax      – angle range that
+//       confirms the "midpoint" (effort) pos.
+// We don't count a rep until BOTH phases
+// are confirmed in the correct order.
+// ─────────────────────────────────────
+const REP_THRESHOLDS = {
+  // Push-up: arms extended (~160-180°) → arms bent (<80°)
+  pushup:   { startMin: 150, startMax: 185, midMin: 50,  midMax: 90  },
+  // Squat: legs straight (~160-180°) → deep bend (<100°)
+  squat:    { startMin: 155, startMax: 185, midMin: 70,  midMax: 105 },
+  // Bicep curl: arms extended (~150-180°) → fully curled (<55°)
+  curl:     { startMin: 145, startMax: 185, midMin: 30,  midMax: 65  },
+  // Lunge: standing (~160-180°) → lunged (<100°)
+  lunge:    { startMin: 155, startMax: 185, midMin: 75,  midMax: 105 },
+  // Plank: no reps (isometric) — tracked as hold time
+  plank:    null,
+  // Crunch: hips extended (~155-180°) → crunched (<120°)
+  crunch:   { startMin: 150, startMax: 185, midMin: 80,  midMax: 125 },
+  // Glute bridge: hips down (~160-180°) → hips raised (>140° hip, use knee angle)
+  bridge:   { startMin: 150, startMax: 185, midMin: 100, midMax: 140 },
+  // Generic fallback
+  generic:  { startMin: 145, startMax: 185, midMin: 50,  midMax: 95  },
+};
+
+// Return the SINGLE angle that best represents the movement for each exercise
+function getPrimaryAngle(exId, laAngle, raAngle, lkAngle, rkAngle, lhAngle) {
+  switch (exId) {
+    case 'pushup':   return (laAngle + raAngle) / 2;   // average arm angle
+    case 'squat':    return (lkAngle + rkAngle) / 2;   // average knee angle
+    case 'curl':     return (laAngle + raAngle) / 2;   // average arm angle
+    case 'lunge':    return Math.min(lkAngle, rkAngle); // deepest knee
+    case 'crunch':   return lhAngle;                    // hip/torso angle
+    case 'bridge':   return (lkAngle + rkAngle) / 2;   // knee angle (proxy for hip lift)
+    case 'deadlift': return lhAngle;
+    case 'bench':    return (laAngle + raAngle) / 2;
+    case 'pullup':   return (laAngle + raAngle) / 2;
+    case 'shpress':  return (laAngle + raAngle) / 2;
+    case 'lateral':  return (laAngle + raAngle) / 2;
+    case 'mclimber': return (lkAngle + rkAngle) / 2;
+    case 'jumpjack': return (laAngle + raAngle) / 2;
+    default:         return (laAngle + raAngle) / 2;
+  }
+}
+
+// ─────────────────────────────────────
+// CORE REP COUNTING — uses hysteresis
+// Returns: { counted: bool, feedback: string, isWrong: bool }
+// ─────────────────────────────────────
+function evaluateRep(exId, angle, formFeedback, isWrong) {
+  const thresh = REP_THRESHOLDS[exId] || REP_THRESHOLDS.generic;
+
+  // Plank is isometric — no rep counting
+  if (!thresh) {
+    return { counted: false, feedback: formFeedback, isWrong };
+  }
+
+  const inStart    = angle >= thresh.startMin && angle <= thresh.startMax;
+  const inMidpoint = angle >= thresh.midMin   && angle <= thresh.midMax;
+
+  let counted = false;
+
+  if (repPhase === 'start' && inMidpoint) {
+    // Moved from start position into the effort/midpoint zone
+    repPhase = 'midpoint';
+  } else if (repPhase === 'midpoint' && inStart) {
+    // Completed the return to start → one full rep
+    const now = Date.now();
+    if (now - lastRepTimestamp >= 800) {   // 800 ms minimum between reps
+      lastRepTimestamp = now;
+      repCount++;
+      correctReps = repCount;
+      document.getElementById('repCount').textContent = repCount;
+      showToast(`Rep ${repCount} ✓`);
+      syncWorkoutSession();
+      counted = true;
+    }
+    repPhase = 'start';
+  }
+  // If angle is in neither zone we stay in current phase (hysteresis band)
+
+  return { counted, feedback: formFeedback, isWrong };
+}
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    ...options
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Request failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+function getUserPayload(goal = selectedGoal) {
+  if (!user || !goal) return null;
+  return { name: user.name, age: user.age, gender: user.gender, height_cm: user.height, weight_kg: user.weight, goal };
+}
+
+function renderProfileBar() {
+  if (!user) return;
+  const bmiInfo = getBMIInfo(user.bmi);
+  const bar = document.getElementById('profileBar');
+  bar.innerHTML = `
+    <div class="pstat"><span class="pstat-label">Name</span><span class="pstat-value">${user.name}</span></div>
+    <div class="pstat"><span class="pstat-label">Age</span><span class="pstat-value">${user.age} yrs</span></div>
+    <div class="pstat"><span class="pstat-label">Height</span><span class="pstat-value">${user.height} cm</span></div>
+    <div class="pstat"><span class="pstat-label">Weight</span><span class="pstat-value">${user.weight} kg</span></div>
+    <div class="pstat"><span class="pstat-label">BMI</span><span class="pstat-value" style="color:${bmiInfo.color}">${user.bmi}</span></div>
+    <div class="pstat"><span class="pstat-label">Status</span><span class="pstat-value" style="color:${bmiInfo.color};font-size:13px;">${user.bmiStatus}</span></div>
+  `;
+}
+
+async function createBackendProfile() {
+  const payload = getUserPayload();
+  if (!payload) return null;
+  return apiRequest('/profiles', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+async function fetchRecommendation() {
+  const payload = getUserPayload();
+  if (!payload) return null;
+  recommendationData = await apiRequest('/recommendations', { method: 'POST', body: JSON.stringify(payload) });
+  return recommendationData;
+}
+
+async function startWorkoutSession() {
+  if (!user || !selectedGoal || !currentExercise) return;
+  try {
+    const session = await apiRequest('/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ user_name: user.name, exercise_name: currentExercise.name, goal: selectedGoal })
+    });
+    activeSessionId = session.session_id;
+  } catch (error) { console.warn('Unable to create session', error); }
+}
+
+async function syncWorkoutSession() {
+  if (!activeSessionId) return;
+  try {
+    await apiRequest(`/sessions/${activeSessionId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        reps_completed: repCount,
+        correct_reps: correctReps,
+        wrong_pose_events: wrongPoseEvents,
+        duration_seconds: Math.max(0, Math.round((Date.now() - sessionStartedAt) / 1000))
+      })
+    });
+  } catch (error) { console.warn('Unable to sync workout session', error); }
+}
+
+function resetRepTracking() {
+  repCount = 0;
+  repPhase = 'start';           // ← reset phase (was missing before)
+  lastRepTimestamp = 0;
+  correctReps = 0;
+  wrongPoseEvents = 0;
+  document.getElementById('repCount').textContent = '0';
+}
+
+// ═══════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'loginPage') document.getElementById('mainNav').style.display = 'none';
+  else document.getElementById('mainNav').style.display = 'flex';
+  if (id !== 'cameraPage') stopCamera();
+}
+
+function logout() {
+  stopCamera();
+  user = null; selectedGoal = null;
+  resetRepTracking();
+  recommendationData = null;
+  activeSessionId = null;
+  sessionStartedAt = 0;
+  showPage('loginPage');
+  showToast('Logged out successfully');
+}
+
+// ═══════════════════════════════════
+// TOAST
+// ═══════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════
+// BMI
+// ═══════════════════════════════════
+function calcBMI() {
+  const h = parseFloat(document.getElementById('inHeight').value);
+  const w = parseFloat(document.getElementById('inWeight').value);
+  const name = document.getElementById('inName').value.trim();
+  const age = parseInt(document.getElementById('inAge').value);
+  const preview = document.getElementById('bmiPreview');
+  const btn = document.getElementById('loginBtn');
+  if (h > 0 && w > 0 && name && age > 0) {
+    const bmi = (w / ((h/100) ** 2)).toFixed(1);
+    const { status, color, range } = getBMIInfo(bmi);
+    document.getElementById('bmiNum').textContent = bmi;
+    document.getElementById('bmiNum').style.color = color;
+    document.getElementById('bmiStatus').textContent = status;
+    document.getElementById('bmiStatus').style.color = color;
+    document.getElementById('bmiRange').textContent = range;
+    preview.classList.add('show');
+    btn.disabled = false;
+  } else {
+    preview.classList.remove('show');
+    btn.disabled = true;
+  }
+}
+
+function getBMIInfo(bmi) {
+  const b = parseFloat(bmi);
+  if (b < 18.5) return { status: '⚠ Underweight', color: '#FF9500', range: 'BMI below 18.5 — consider weight gain plan' };
+  if (b < 25)   return { status: '✓ Healthy Weight', color: '#34C759', range: 'BMI 18.5–24.9 — great range to be in!' };
+  if (b < 30)   return { status: '⚠ Overweight', color: '#FF9500', range: 'BMI 25–29.9 — consider weight loss plan' };
+  return { status: '⚠ Obese', color: '#FF3B30', range: 'BMI 30+ — medical guidance recommended' };
+}
+
+// ═══════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════
+function doLogin() {
+  const name = document.getElementById('inName').value.trim();
+  const age  = parseInt(document.getElementById('inAge').value);
+  const gender = document.getElementById('inGender').value;
+  const height = parseFloat(document.getElementById('inHeight').value);
+  const weight = parseFloat(document.getElementById('inWeight').value);
+  const bmi  = parseFloat((weight / ((height/100) ** 2)).toFixed(1));
+
+  user = {
+    name, age, gender, height, weight, bmi,
+    bmiStatus: bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Healthy Weight' : bmi < 30 ? 'Overweight' : 'Obese'
+  };
+
+  document.getElementById('navAvatar').textContent = name[0].toUpperCase();
+  document.getElementById('navName').textContent = name;
+  renderProfileBar();
+
+  const sub = document.getElementById('goalSub');
+  if (bmi < 18.5) { sub.textContent = `Your BMI is ${bmi} — we recommend the Body Gain plan.`; highlightGoal('gain'); }
+  else if (bmi >= 25) { sub.textContent = `Your BMI is ${bmi} — we recommend the Weight Loss plan.`; highlightGoal('lose'); }
+  else { sub.textContent = `Your BMI is ${bmi} — great shape! Consider Maintain & Tone.`; highlightGoal('maintain'); }
+
+  showPage('goalPage');
+  showToast(`Welcome, ${name}! 🎉`);
+}
+
+function highlightGoal(g) {
+  document.querySelectorAll('.goal-card').forEach(c => c.classList.remove('selected'));
+  const idx = { lose: 0, gain: 1, maintain: 2 };
+  document.querySelectorAll('.goal-card')[idx[g]].classList.add('selected');
+  selectedGoal = g;
+  document.getElementById('goalBtn').disabled = false;
+}
+
+// ═══════════════════════════════════
+// GOAL
+// ═══════════════════════════════════
+function selectGoal(goal) {
+  selectedGoal = goal;
+  document.querySelectorAll('.goal-card').forEach(c => c.classList.remove('selected'));
+  const idx = { lose: 0, gain: 1, maintain: 2 };
+  document.querySelectorAll('.goal-card')[idx[goal]].classList.add('selected');
+  document.getElementById('goalBtn').disabled = false;
+}
+
+async function goPlan() {
+  if (!selectedGoal) return;
+  const goalBtn = document.getElementById('goalBtn');
+  goalBtn.disabled = true;
+  goalBtn.textContent = 'BUILDING PLAN...';
+
+  try {
+    await createBackendProfile();
+    await fetchRecommendation();
+  } catch (error) {
+    console.warn('Using local plan fallback', error);
+    recommendationData = null;
+  } finally {
+    goalBtn.disabled = false;
+    goalBtn.textContent = 'BUILD MY PLAN';   // ← fixed: removed stray apostrophe
+  }
+
+  buildPlan();
+  showPage('planPage');
+}
+
+// ═══════════════════════════════════
+// PLANS DATA
+// ═══════════════════════════════════
+const PLANS = {
+  lose: {
+    title: 'WEIGHT LOSS PLAN',
+    calories: 1600,
+    meals: [
+      { time: 'Breakfast', name: 'High Protein Start', items: ['3 Egg Whites + 1 Yolk', 'Oats with skimmed milk', 'Green tea (no sugar)', '1 Medium Apple'], cal: 320, protein: 28, carbs: 42, fat: 6 },
+      { time: 'Mid Morning', name: 'Light Snack', items: ['1 cup Greek yogurt', '10 Almonds', 'Cucumber slices'], cal: 180, protein: 14, carbs: 12, fat: 7 },
+      { time: 'Lunch', name: 'Balanced Bowl', items: ['Grilled chicken 150g', '1 cup Brown rice', 'Mixed vegetables sautéed', 'Lemon dressing'], cal: 420, protein: 42, carbs: 38, fat: 9 },
+      { time: 'Evening Snack', name: 'Energy Boost', items: ['Protein shake (1 scoop)', '1 Banana', '5 Walnuts'], cal: 240, protein: 22, carbs: 28, fat: 6 },
+      { time: 'Dinner', name: 'Light & Clean', items: ['Grilled fish 120g', 'Steamed broccoli', '1 slice multigrain bread', 'Tomato soup'], cal: 340, protein: 38, carbs: 22, fat: 8 },
+    ],
+    exercises: [
+      { name: 'Jumping Jacks', sets: '3 × 30 reps', muscle: 'Full Body', type: 'Cardio', difficulty: 'Easy', mediapipeId: 'jumpjack' },
+      { name: 'Push-ups', sets: '3 × 15 reps', muscle: 'Chest, Triceps', type: 'Strength', difficulty: 'Medium', mediapipeId: 'pushup' },
+      { name: 'Squats', sets: '4 × 20 reps', muscle: 'Legs, Glutes', type: 'Strength', difficulty: 'Medium', mediapipeId: 'squat' },
+      { name: 'Mountain Climbers', sets: '3 × 30 reps', muscle: 'Core, Cardio', type: 'Cardio', difficulty: 'Hard', mediapipeId: 'mclimber' },
+      { name: 'Plank', sets: '3 × 45 seconds', muscle: 'Core', type: 'Isometric', difficulty: 'Medium', mediapipeId: 'plank' },
+      { name: 'Lunges', sets: '3 × 12 per leg', muscle: 'Legs, Glutes', type: 'Strength', difficulty: 'Medium', mediapipeId: 'lunge' },
+    ],
+    precautions: [
+      { icon: '💧', title: 'Stay Hydrated', text: 'Drink at least 3–4 litres of water daily. Add lemon for metabolism boost. Avoid sugary drinks and alcohol completely.' },
+      { icon: '😴', title: 'Prioritize Sleep', text: 'Get 7–9 hours of quality sleep. Poor sleep disrupts hunger hormones (ghrelin & leptin), making weight loss harder.' },
+      { icon: '🚫', title: 'Avoid These Foods', text: 'Avoid fried foods, processed snacks, white bread, sodas, excessive salt, full-fat dairy, and late-night eating.' },
+      { icon: '📏', title: 'Calorie Deficit', text: 'Maintain a 400–500 calorie deficit daily. Never go below 1200 kcal. Track your intake using apps like MyFitnessPal.' },
+      { icon: '🩺', title: 'Medical Check', text: 'Consult a doctor before starting if you have any chronic conditions, joint pain, or are on medication.' },
+      { icon: '📆', title: 'Rest Days', text: 'Take at least 2 rest days per week. Active recovery (yoga, walking) is better than complete inactivity.' },
+    ]
+  },
+  gain: {
+    title: 'BODY GAIN PLAN',
+    calories: 2800,
+    meals: [
+      { time: 'Breakfast', name: 'Power Breakfast', items: ['4 whole eggs scrambled', 'Peanut butter toast (2 slices)', 'Banana milkshake', 'Mixed nuts 30g'], cal: 620, protein: 38, carbs: 58, fat: 24 },
+      { time: 'Mid Morning', name: 'Muscle Fuel', items: ['Protein shake + oats', '2 Dates', 'Full fat milk 300ml'], cal: 380, protein: 30, carbs: 45, fat: 10 },
+      { time: 'Lunch', name: 'Bulk Bowl', items: ['Chicken breast 200g', '2 cups White rice', 'Dal (lentils) 1 cup', 'Ghee 1 tsp', 'Paneer 100g'], cal: 780, protein: 62, carbs: 72, fat: 22 },
+      { time: 'Pre-Workout', name: 'Energy Prime', items: ['Banana + honey', 'Black coffee', 'Creatine (3–5g)'], cal: 160, protein: 2, carbs: 38, fat: 1 },
+      { time: 'Dinner', name: 'Recovery Meal', items: ['Salmon or Chicken 200g', 'Sweet potato 1 medium', 'Steamed vegetables', 'Cottage cheese 100g'], cal: 620, protein: 58, carbs: 48, fat: 18 },
+    ],
+    exercises: [
+      { name: 'Bench Press', sets: '4 × 8–10 reps', muscle: 'Chest, Shoulders', type: 'Strength', difficulty: 'Hard', mediapipeId: 'bench' },
+      { name: 'Pull-ups', sets: '4 × 8 reps', muscle: 'Back, Biceps', type: 'Strength', difficulty: 'Hard', mediapipeId: 'pullup' },
+      { name: 'Squats', sets: '4 × 10 reps', muscle: 'Legs, Glutes', type: 'Strength', difficulty: 'Hard', mediapipeId: 'squat' },
+      { name: 'Bicep Curls', sets: '3 × 12 reps', muscle: 'Biceps', type: 'Isolation', difficulty: 'Easy', mediapipeId: 'curl' },
+      { name: 'Deadlifts', sets: '3 × 8 reps', muscle: 'Back, Legs', type: 'Compound', difficulty: 'Hard', mediapipeId: 'deadlift' },
+      { name: 'Shoulder Press', sets: '3 × 10 reps', muscle: 'Shoulders, Triceps', type: 'Strength', difficulty: 'Medium', mediapipeId: 'shpress' },
+    ],
+    precautions: [
+      { icon: '🥩', title: 'Protein Intake', text: 'Consume 1.6–2.2g of protein per kg body weight daily. Spread intake across 5–6 meals. Use whey protein if needed.' },
+      { icon: '📈', title: 'Progressive Overload', text: 'Increase weights or reps every week. Your muscles grow only when challenged beyond their current capacity.' },
+      { icon: '😴', title: 'Sleep & Recovery', text: 'Muscle growth happens during sleep. Aim for 8–9 hours. Avoid overtraining — rest is when you grow.' },
+      { icon: '💊', title: 'Supplements (Optional)', text: 'Creatine monohydrate (5g/day), Whey protein, and Multivitamins are safe and evidence-based for muscle gain.' },
+      { icon: '🚫', title: 'Avoid Junk Gains', text: 'Do not bulk on junk food. This leads to excess fat gain. Focus on clean calorie surplus from whole foods.' },
+      { icon: '🩺', title: 'Form Over Weight', text: 'Never compromise on exercise form to lift heavier. Poor form causes injuries. Use a mirror or this AI detector.' },
+    ]
+  },
+  maintain: {
+    title: 'MAINTAIN & TONE PLAN',
+    calories: 2100,
+    meals: [
+      { time: 'Breakfast', name: 'Balanced Start', items: ['2 Eggs + 1 white', 'Multigrain toast', 'Low-fat yogurt', 'Mixed berries'], cal: 380, protein: 26, carbs: 42, fat: 10 },
+      { time: 'Mid Morning', name: 'Clean Snack', items: ['Fruit salad', '15 Almonds', 'Green tea'], cal: 190, protein: 6, carbs: 28, fat: 8 },
+      { time: 'Lunch', name: 'Toned Plate', items: ['Grilled chicken 150g', 'Quinoa 1 cup', 'Salad with olive oil', 'Cucumber raita'], cal: 480, protein: 44, carbs: 42, fat: 12 },
+      { time: 'Evening', name: 'Post-Workout', items: ['Protein shake', '1 Banana', '5 Walnuts'], cal: 240, protein: 22, carbs: 28, fat: 7 },
+      { time: 'Dinner', name: 'Light Dinner', items: ['Grilled fish 130g', 'Roasted vegetables', 'Brown rice ½ cup', 'Lemon water'], cal: 390, protein: 38, carbs: 32, fat: 9 },
+    ],
+    exercises: [
+      { name: 'Push-ups', sets: '3 × 15 reps', muscle: 'Chest, Triceps', type: 'Strength', difficulty: 'Medium', mediapipeId: 'pushup' },
+      { name: 'Squats', sets: '3 × 20 reps', muscle: 'Legs, Glutes', type: 'Strength', difficulty: 'Medium', mediapipeId: 'squat' },
+      { name: 'Plank', sets: '3 × 60 seconds', muscle: 'Core', type: 'Isometric', difficulty: 'Medium', mediapipeId: 'plank' },
+      { name: 'Bicycle Crunches', sets: '3 × 20 reps', muscle: 'Core, Abs', type: 'Core', difficulty: 'Medium', mediapipeId: 'crunch' },
+      { name: 'Glute Bridges', sets: '3 × 15 reps', muscle: 'Glutes, Hamstrings', type: 'Strength', difficulty: 'Easy', mediapipeId: 'bridge' },
+      { name: 'Lateral Raises', sets: '3 × 12 reps', muscle: 'Shoulders', type: 'Isolation', difficulty: 'Easy', mediapipeId: 'lateral' },
+    ],
+    precautions: [
+      { icon: '⚖️', title: 'Maintain Calorie Balance', text: 'Eat at your maintenance calorie level. Track weekly average, not daily. Minor fluctuations (±200 kcal) are normal.' },
+      { icon: '🧘', title: 'Mind-Body Connection', text: 'Include yoga or stretching 2× per week. Good flexibility reduces injury risk and improves workout performance.' },
+      { icon: '💧', title: 'Hydration & Nutrition', text: 'Drink 2.5–3 litres of water. Include micronutrients: leafy greens, colourful vegetables, seasonal fruits.' },
+      { icon: '🔄', title: 'Vary Your Workouts', text: 'Change your exercise routine every 4–6 weeks to avoid plateaus and keep your body adapting.' },
+      { icon: '📊', title: 'Track Progress', text: 'Take weekly measurements (waist, hips, arms). The scale may not change but body composition can improve.' },
+      { icon: '🧠', title: 'Manage Stress', text: 'Chronic stress increases cortisol, which promotes fat storage. Practice meditation, deep breathing, or journaling.' },
+    ]
+  }
+};
+
+// ═══════════════════════════════════
+// BUILD PLAN
+// ═══════════════════════════════════
+function buildPlan() {
+  const localPlan = PLANS[selectedGoal];
+  const plan = recommendationData ? {
+    calories: recommendationData.daily_calories,
+    meals: recommendationData.meals.map(m => ({
+      time: m.time, name: m.name, items: m.items,
+      cal: m.calories, protein: m.protein_g, carbs: m.carbs_g, fat: m.fat_g
+    })),
+    exercises: recommendationData.exercises.map(ex => ({
+      name: ex.name, sets: ex.sets, muscle: ex.muscle,
+      type: ex.type, difficulty: ex.difficulty, mediapipeId: ex.detector_id
+    })),
+    precautions: recommendationData.precautions.map(p => ({ icon: '⚠️', title: p.title, text: p.text })),
+    notes: recommendationData.notes || []
+  } : localPlan;
+
+  const baseCalories = plan.calories;
+  const cal = baseCalories;
+
+  document.getElementById('planTitle').innerHTML = `YOUR <span>${selectedGoal === 'lose' ? 'WEIGHT LOSS' : selectedGoal === 'gain' ? 'BODY GAIN' : 'MAINTAIN'}</span> PLAN`;
+  document.getElementById('planSub').textContent = `Personalized for ${user.name} • Target: ~${cal} kcal/day`;
+
+  // FOOD TAB
+  let foodHTML = `<p style="color:var(--muted);font-size:14px;margin-bottom:20px;">Daily target: <strong style="color:var(--lime)">${cal} kcal</strong> | Tailored for your ${user.bmiStatus} status</p>`;
+  if (plan.notes && plan.notes.length) {
+    foodHTML += `<div style="background:var(--card);border:1px solid var(--border);padding:14px 16px;border-radius:12px;margin-bottom:20px;">${plan.notes.map(note => `<div style="font-size:13px;color:var(--muted);margin:4px 0;">${note}</div>`).join('')}</div>`;
+  }
+  foodHTML += `<div class="meal-grid">`;
+  plan.meals.forEach(m => {
+    foodHTML += `
+      <div class="meal-card">
+        <div class="meal-time">${m.time}</div>
+        <div class="meal-name">${m.name}</div>
+        <ul class="meal-items">${m.items.map(i => `<li>${i}</li>`).join('')}</ul>
+        <div class="macro-bar">
+          <div class="macro"><div class="macro-val" style="color:var(--orange)">${m.protein}g</div><div class="macro-label">Protein</div></div>
+          <div class="macro"><div class="macro-val" style="color:var(--blue)">${m.carbs}g</div><div class="macro-label">Carbs</div></div>
+          <div class="macro"><div class="macro-val" style="color:var(--green)">${m.fat}g</div><div class="macro-label">Fat</div></div>
+          <div class="macro"><div class="macro-val">${m.cal}</div><div class="macro-label">kcal</div></div>
+        </div>
+      </div>`;
+  });
+  foodHTML += '</div>';
+  document.getElementById('tab-food').innerHTML = foodHTML;
+
+  // EXERCISE TAB
+  let exHTML = `<p style="color:var(--muted);font-size:14px;margin-bottom:20px;">Tap an exercise and click "Monitor" to start AI pose detection with rep counting.</p><div class="exercise-list">`;
+  plan.exercises.forEach((ex, i) => {
+    const diff = ex.difficulty === 'Easy' ? 'badge-green' : ex.difficulty === 'Medium' ? 'badge-orange' : 'badge-blue';
+    exHTML += `
+      <div class="ex-row">
+        <div class="ex-num">0${i+1}</div>
+        <div class="ex-info">
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-meta">${ex.sets} • ${ex.muscle}</div>
+          <div class="ex-badges" style="margin-top:8px;">
+            <span class="badge badge-orange">${ex.type}</span>
+            <span class="badge ${diff}">${ex.difficulty}</span>
+          </div>
+        </div>
+        <button class="btn-monitor" onclick="openCamera('${ex.name}', '${ex.mediapipeId}')">📷 Monitor</button>
+      </div>`;
+  });
+  exHTML += '</div>';
+  document.getElementById('tab-exercise').innerHTML = exHTML;
+
+  // PRECAUTIONS TAB
+  let preHTML = `<p style="color:var(--muted);font-size:14px;margin-bottom:20px;">Follow these guidelines to stay safe and maximize your results.</p><div class="precaution-list">`;
+  plan.precautions.forEach(p => {
+    preHTML += `
+      <div class="precaution">
+        <div class="precaution-icon">${p.icon}</div>
+        <div>
+          <div class="precaution-title">${p.title}</div>
+          <div class="precaution-text">${p.text}</div>
+        </div>
+      </div>`;
+  });
+  preHTML += '</div>';
+  document.getElementById('tab-precautions').innerHTML = preHTML;
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['food','exercise','precautions'][i] === id);
+  });
+  document.querySelectorAll('.tab-content').forEach((c,i) => {
+    c.classList.toggle('active', ['tab-food','tab-exercise','tab-precautions'][i] === `tab-${id}`);
+  });
+}
+
+// ═══════════════════════════════════
+// CAMERA + MEDIAPIPE POSE DETECTION
+// ═══════════════════════════════════
+function openCamera(exerciseName, exId) {
+  currentExercise = { name: exerciseName, id: exId };
+  resetRepTracking();   // ← also resets repPhase to 'start'
+  activeSessionId = null;
+  sessionStartedAt = 0;
+  lastPoseSyncAt = 0;
+  document.getElementById('camTitle').innerHTML = `<span>${exerciseName.toUpperCase()}</span> MONITOR`;
+  document.getElementById('poseFeedback').textContent = 'Press Start Camera';
+  document.getElementById('poseFeedback').className = 'pose-feedback';
+  document.getElementById('cameraStatus').textContent = 'Press Start Camera to begin';
+  document.getElementById('angLA').textContent = '—°';
+  document.getElementById('angRA').textContent = '—°';
+  document.getElementById('angLK').textContent = '—°';
+  document.getElementById('angRK').textContent = '—°';
+  showPage('cameraPage');
+}
+
+function toggleCamera() {
+  if (cameraStream) { stopCamera(); return; }
+  startCamera();
+}
+
+async function startCamera() {
+  const btn = document.getElementById('cameraBtn');
+  const status = document.getElementById('cameraStatus');
+  try {
+    status.textContent = 'Requesting camera access...';
+    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+    const video = document.getElementById('videoEl');
+    video.srcObject = cameraStream;
+    await video.play();
+    btn.textContent = '⏹ STOP CAMERA';
+    btn.className = 'btn-start-ex stop';
+    status.textContent = 'Loading AI model...';
+    sessionStartedAt = Date.now();
+    await startWorkoutSession();
+    initPose();
+  } catch (e) {
+    status.textContent = 'Camera error: ' + e.message;
+    showToast('Camera permission denied ❌');
+  }
+}
+
+function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  if (mpCamera) { try { mpCamera.stop(); } catch(e){} mpCamera = null; }
+  const btn = document.getElementById('cameraBtn');
+  if (btn) { btn.textContent = '▶ START CAMERA'; btn.className = 'btn-start-ex'; }
+  const status = document.getElementById('cameraStatus');
+  if (status) status.textContent = 'Camera stopped';
+  const video = document.getElementById('videoEl');
+  if (video) video.srcObject = null;
+  const canvas = document.getElementById('poseCanvas');
+  if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
+  syncWorkoutSession();
+  activeSessionId = null;
+}
+
+function resetReps() {
+  resetRepTracking();
+  showToast('Reps reset!');
+}
+
+function initPose() {
+  const video = document.getElementById('videoEl');
+  const canvas = document.getElementById('poseCanvas');
+
+  const pose = new Pose({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+  });
+
+  pose.setOptions({
+    modelComplexity: 1,
+    smoothLandmarks: true,
+    enableSegmentation: false,
+    minDetectionConfidence: 0.6,
+    minTrackingConfidence: 0.6
+  });
+
+  pose.onResults((results) => {
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (results.poseLandmarks) {
+      drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: 'rgba(200,255,0,0.4)', lineWidth: 2 });
+      drawLandmarks(ctx, results.poseLandmarks, { color: '#C8FF00', lineWidth: 1, radius: 3 });
+      analyzeExercise(results.poseLandmarks);
+    }
+  });
+
+  mpCamera = new Camera(video, {
+    onFrame: async () => { await pose.send({ image: video }); },
+    width: 640, height: 480
+  });
+
+  mpCamera.start().then(() => {
+    document.getElementById('cameraStatus').textContent = `Detecting: ${currentExercise.name}`;
+    document.getElementById('poseFeedback').textContent = `Ready — Do your ${currentExercise.name}!`;
+  }).catch(e => {
+    document.getElementById('cameraStatus').textContent = 'Error starting pose detector';
+  });
+}
+
+// ═══════════════════════════════════
+// ANGLE MATH
+// ═══════════════════════════════════
+function getAngle(a, b, c) {
+  const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+  let angle = Math.abs(radians * 180 / Math.PI);
+  if (angle > 180) angle = 360 - angle;
+  return Math.round(angle);
+}
+
+function lm(landmarks, idx) { return landmarks[idx]; }
+
+async function analyzePoseOnBackend(angles) {
+  if (poseRequestInFlight) return null;
+  if (Date.now() - lastPoseSyncAt < 250) return null;
+  poseRequestInFlight = true;
+  lastPoseSyncAt = Date.now();
+  try {
+    return await apiRequest('/pose/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ detector_id: currentExercise.id, landmarks: angles })
+    });
+  } catch (error) {
+    return null;
+  } finally {
+    poseRequestInFlight = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// EXERCISE ANALYSIS  (rewritten rep-counting logic)
+// Each exercise block:
+//   1. Computes the primary angle for that movement
+//   2. Generates human-readable form feedback
+//   3. Calls evaluateRep() which handles the phase-based
+//      hysteresis counting — NO manual repState flipping
+// ═══════════════════════════════════════════════════════
+async function analyzeExercise(lms) {
+  if (!currentExercise) return;
+
+  const id = currentExercise.id;
+  const fb = document.getElementById('poseFeedback');
+
+  // Compute all joint angles
+  const laAngle = getAngle(lm(lms,11), lm(lms,13), lm(lms,15));
+  const raAngle = getAngle(lm(lms,12), lm(lms,14), lm(lms,16));
+  const lkAngle = getAngle(lm(lms,23), lm(lms,25), lm(lms,27));
+  const rkAngle = getAngle(lm(lms,24), lm(lms,26), lm(lms,28));
+  const lhAngle = getAngle(lm(lms,11), lm(lms,23), lm(lms,25));
+
+  document.getElementById('angLA').textContent = laAngle + '°';
+  document.getElementById('angRA').textContent = raAngle + '°';
+  document.getElementById('angLK').textContent = lkAngle + '°';
+  document.getElementById('angRK').textContent = rkAngle + '°';
+
+  // Get primary angle for this exercise
+  const primaryAngle = getPrimaryAngle(id, laAngle, raAngle, lkAngle, rkAngle, lhAngle);
+
+  // Form feedback (DECOUPLED from rep counting)
+  let formFeedback = '';
+  let isWrong = false;
+
+  if (id === 'pushup') {
+    const avgArm = (laAngle + raAngle) / 2;
+    if (avgArm < 90) {
+      formFeedback = lhAngle < 155 ? '⚠ Keep your body straight!' : '✓ Good — push up now!';
+      isWrong = lhAngle < 155;
+    } else {
+      formFeedback = avgArm < 155 ? '⚠ Fully extend your arms!' : '✓ Arms extended — go down';
+      isWrong = avgArm < 155;
+    }
+  }
+  else if (id === 'squat') {
+    const avgKnee = (lkAngle + rkAngle) / 2;
+    if (avgKnee < 105) {
+      if (lhAngle < 50) { formFeedback = '⚠ Keep chest up!'; isWrong = true; }
+      else if (Math.min(lkAngle, rkAngle) < 65) { formFeedback = '⚠ Slightly too deep — careful!'; isWrong = true; }
+      else { formFeedback = '✓ Good depth — drive up!'; }
+    } else {
+      formFeedback = avgKnee > 170 ? '✓ Stand tall — squat down' : '✓ Coming up...';
+    }
+  }
+  else if (id === 'curl') {
+    const avgArm = (laAngle + raAngle) / 2;
+    if (avgArm < 65) {
+      formFeedback = '✓ Fully curled! Lower slowly.';
+    } else if (avgArm < 145) {
+      formFeedback = '↕ Mid-range — keep going';
+    } else {
+      formFeedback = '✓ Arms down — curl up!';
+    }
+  }
+  else if (id === 'lunge') {
+    const minKnee = Math.min(lkAngle, rkAngle);
+    if (minKnee < 105) {
+      formFeedback = minKnee < 70 ? '⚠ Don\'t let knee touch floor!' : '✓ Good lunge depth!';
+      isWrong = minKnee < 70;
+    } else {
+      formFeedback = '✓ Step forward and lunge';
+    }
+  }
+  else if (id === 'plank') {
+    // Isometric — no reps, only form feedback
+    if (lhAngle > 155 && lhAngle < 195) { formFeedback = '✓ Perfect plank! Hold it.'; }
+    else if (lhAngle <= 155) { formFeedback = '⚠ Raise your hips higher!'; isWrong = true; }
+    else { formFeedback = '⚠ Lower your hips!'; isWrong = true; }
+  }
+  else if (id === 'crunch') {
+    formFeedback = lhAngle < 125 ? '✓ Good crunch — extend back' : '✓ Crunch up towards knees';
+  }
+  else if (id === 'bridge') {
+    const avgKnee = (lkAngle + rkAngle) / 2;
+    formFeedback = avgKnee < 140 ? '✓ Hips raised — squeeze glutes!' : '✓ Lower hips and thrust up';
+  }
+  else {
+    // Generic fallback
+    const avgArm = (laAngle + raAngle) / 2;
+    formFeedback = avgArm < 90
+      ? '✓ Down position — come back up'
+      : `Detecting ${currentExercise.name}...`;
+  }
+
+  // Try backend feedback (optional enhancement)
+  const backendFeedback = await analyzePoseOnBackend({
+    left_arm_angle: laAngle, right_arm_angle: raAngle,
+    left_knee_angle: lkAngle, right_knee_angle: rkAngle,
+    hip_angle: lhAngle
+  });
+  if (backendFeedback && backendFeedback.state !== 'unknown') {
+    formFeedback = backendFeedback.feedback;
+    isWrong = !backendFeedback.form_ok;
+  }
+
+  // Count reps using hysteresis phase logic
+  const result = evaluateRep(id, primaryAngle, formFeedback, isWrong);
+  if (isWrong) wrongPoseEvents++;
+
+  fb.textContent = result.feedback;
+  fb.className = 'pose-feedback' + (result.isWrong ? ' wrong' : '');
+}
+</script>
+</body>
+</html>
